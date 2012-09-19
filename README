@@ -45,7 +45,25 @@ O catálogo e as palavras-chave serão gerenciados pelo administrador do site vi
 --[trajettoria-catalogo-user]
 
 ==========================================================================================================================
-v0.2
+#+++v0.3+++
+19/09/12 - Renato
+#descrição
+Construção do painel de administração
+
+#changelog
+novo dump corrige erros nos campos
+correções no markup das tabelas
+adicionado arquivo "ajax.php" -> processa todas as ações
+adicionado arquivo "style-catalogo.css" -> folha de estilo do plugin
+adicionado arquivo "util.php" na pasta "/inc/" -> funções úteis ao plugin
+
+#known issues
+#todo
+processar ação "editar" das publicações, filtrando em 2 passos: 1-recuperar dados / 2-atualizar dados
+vide @todo no código
+
+==========================================================================================================================
+#+++v0.2+++
 18/09/12 - Renato
 #descrição
 Configurações iniciais do plugin.
@@ -60,7 +78,7 @@ iniciada a programação do painel de administração
 implementações jQuery e ajax
 
 ==========================================================================================================================
-v0.1
+#+++v0.1+++
 17/09/12 - Renato
 #descrição
 Configurações iniciais do plugin.
