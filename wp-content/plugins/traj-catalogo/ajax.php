@@ -2,6 +2,27 @@
 
 require_once('../../../wp-load.php');
 
+function prepareDBStuff(){
+	$stuff["data"] = array(
+			"autor" => $_GET['autor'],
+			"titulo" => $_GET['titulo'],
+			"revista" => $_GET['revista'],
+			"resumo" => $_GET['resumo'],
+			"volume" => $_GET['volume'],
+			"numero" => $_GET['numero'],
+			"primeira_pag" => $_GET['primeira_pag'],
+			"ultima_pag" => $_GET['ultima_pag'],
+			"ano" => $_GET['ano'],
+			"palavra_ids" => $_GET['chaves'],
+			"fotocopias" => $_GET['fotocopias'],
+			"arquivos" => $_GET['arquivos'],
+			"downloads_count" => 0
+	);
+	$stuff["where"] = array( "id" => $_GET['id'] );
+	
+	return $stuff;
+}
+
 if ( current_user_can('manage_options') ) {
 
 	global $wpdb;
@@ -11,41 +32,26 @@ if ( current_user_can('manage_options') ) {
 	
 	switch ($option){
 		case "new":
-			$data = array(
-						"autor" => $_GET['autor'],
-						"titulo" => $_GET['titulo'],
-						"revista" => $_GET['revista'],
-						"resumo" => $_GET['resumo'],
-						"volume" => $_GET['volume'],
-						"numero" => $_GET['numero'],
-						"primeira_pag" => $_GET['primeira_pag'],
-						"ultima_pag" => $_GET['ultima_pag'],
-						"ano" => $_GET['ano'],
-						"palavra_ids" => $_GET['chaves'],
-						"data_criacao" => $now,
-						"data_modificacao" => $now,
-						"fotocopias" => $_GET['fotocopias'],
-						"arquivos" => $_GET['arquivos'],
-						"downloads_count" => 0
-					);
-			
-			$res = $wpdb->insert(trajCatalogo::TRAJ_TRABALHOS_TABLE, $data);
-			if($res) echo "ok";
+			$stuff = prepareDBStuff();
+			$stuff["data"]["data_criacao"] = $now;
+			$stuff["data"]["data_modificacao"] = $now;
+			$res = $wpdb->insert(trajCatalogo::TRAJ_TRABALHOS_TABLE, $stuff["data"]);
+			if(!$res) echo "error";
+			else echo $stuff["data"]["data_modificacao"];
 			break;
 			
 		case "edit":
-			// filtrar o passo via query string
-			// passo 1: recuperar dados existentes
-			// passo 2: atualizar dados
+			$stuff = prepareDBStuff();
+			$stuff["data"]["data_modificacao"] = $now;
+			$res = $wpdb->update(trajCatalogo::TRAJ_TRABALHOS_TABLE, $stuff["data"], $stuff["where"]);
+			if(!$res) echo "error";
+			else echo $stuff["data"]["data_modificacao"];
 			break;
 			
 		case "del":
-			$data = array(
-						"id" => $_GET['id']
-					);
-			
-			$res = $wpdb->delete(trajCatalogo::TRAJ_TRABALHOS_TABLE, $data);
-			if($res) echo "ok";
+			$stuff = prepareDBStuff();
+			$res = $wpdb->delete(trajCatalogo::TRAJ_TRABALHOS_TABLE, $stuff["where"]);
+			if (!$res) echo "error";
 			break;
 			
 		default:
