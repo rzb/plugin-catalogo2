@@ -9,12 +9,9 @@ Author URI: http://www.trajettoria.com
 */
 
 require_once('inc/util.php');
+require_once('catalogo-config.php');
 
 class trajCatalogo {
-	
-	// configurações
-	const TRAJ_PALAVRAS_TABLE = 'traj_palavras';
-	const TRAJ_TRABALHOS_TABLE = 'traj_trabalhos';
 	
 	/*
 	 * FUNCTION: __construct
@@ -52,16 +49,19 @@ class trajCatalogo {
 		// css
 		wp_register_style( 'catalogo-style-css', plugins_url( '/css/style-catalogo.css', __FILE__ ), FALSE );
 		wp_enqueue_style( 'catalogo-style-css' );
+		wp_register_style( 'bootstrap-css', plugins_url( '/css/bootstrap.css', __FILE__ ), FALSE );
+		wp_enqueue_style( 'bootstrap-css' );
 		
 		// js
-		
+		wp_register_script( 'bootstrap-js', plugins_url( '/js/bootstrap.js', __FILE__ ), array( 'jquery' ) );
+		wp_enqueue_script( 'bootstrap-js' );
 	}
 	
 	public static function catAdminInterface() {
 		
 		if ( current_user_can('manage_options') ) {
 			
-			$trabalhos = self::getTrabalhos();
+			$trabalhos = self::getAllTrabalhos();
 			
 			?>
 			
@@ -156,6 +156,7 @@ class trajCatalogo {
 				</tfoot>
 			</table>
 			
+			
 			<script type="text/javascript">
 
 				jQuery(document).ready(function(){
@@ -206,7 +207,7 @@ class trajCatalogo {
 						var trabalhoEdit = jQuery("#edit-trab");
 						var id = getItemId(this);
 						
-						// cancela a edição anterior e passa a editar a última publicação clicada
+						// cancela a edição anterior e passa a editar a última publicação clicada 
 						if (jQuery(trabalhoEdit).is(":visible")) {
 							// reseta classes originais
 							jQuery(".edited").removeClass("edited");
@@ -216,22 +217,34 @@ class trajCatalogo {
 							jQuery(trabalhoEdit).hide();
 						}
 
-						// atribui classes para facilitar seleção posterior
+						// atribui classes para facilitar seleção posterior 
 						trabalho.addClass("edited");
 						trabalhoEdit.addClass("to_edit edit_item-"+id);
 						
-						// passa todos os valores da tr a ser editada para a tr com os inputs de edição
+						// passa todos os valores da tr a ser editada para a tr com os inputs de edição 
 						trabalho.children().not(".td-opcoes").each(function(){
 							var text = jQuery(this).text();
 							var currentClass = jQuery(this).attr("class");
 							trabalhoEdit.children("td."+currentClass).children("input").val(text);
 						});
-						// esconde a tr com os dados e mostra a tr de edição
+						// esconde a tr com os dados e mostra a tr de edição 
 						trabalho.hide();
 						trabalho.after(trabalhoEdit);
 						trabalhoEdit.show();
 					});
 
+					jQuery(".cancelar").click(function(){
+						var trabalho = jQuery(".edited");
+						var trabalhoEdit = jQuery("#edit-trab");
+						// esconde a tr de edição e mostra a tabela normalmente 
+						// reseta classes originais 
+						jQuery(trabalho).removeClass("edited");
+						jQuery(trabalhoEdit).removeClass().addClass(editTrabOriginals);
+						// alterna o display das tr's 
+						jQuery(trabalho).show();
+						jQuery(trabalhoEdit).hide();
+					});
+					
 					jQuery(".confirmar").click(function(){
 						var id = getItemId(this);
 						var autor = jQuery("#edit_autor").val();
@@ -274,6 +287,9 @@ class trajCatalogo {
 									var currentClass = jQuery(this).attr("class");
 									trabalho.children("td."+currentClass).text(val);
 								});
+								
+								// atualiza a data de modificação
+								trabalho.children(".td-data_modificacao").text(data);
 
 								// esconde a tr de edição e mostra a tabela normalmente
 								// reseta classes originais
@@ -325,15 +341,15 @@ class trajCatalogo {
 		wp_enqueue_script( 'jquery' );
 	}
 	
-	public static function getTrabalhos() {
+	public static function getAllTrabalhos() {
 		global $wpdb;	
 		// contando publicações...
-		$totalTrabs = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM " . self::TRAJ_TRABALHOS_TABLE ) );
+		$totalTrabs = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM " . TRAJ_TRABALHOS_TABLE ) );
 		// trazendo as publicações
 		if ($totalTrabs > 0) {
 			if (!$offset) $offset = 0;
 			$trabalhos = $wpdb->get_results( "SELECT * 
-											  FROM " . self::TRAJ_TRABALHOS_TABLE . "
+											  FROM " . TRAJ_TRABALHOS_TABLE . "
 											  ORDER BY autor ASC
 											  LIMIT 20
 											  OFFSET $offset", OBJECT_K );
@@ -341,6 +357,107 @@ class trajCatalogo {
 		} else {
 			return FALSE;
 		}
+	}
+	
+	public static function prepareModal($dados = NULL){
+	
+		if ($dados === NULL) {
+			$modalHeader = "Nova publicação";
+		} else {
+			$modalHeader = "Editar publicação";
+		}
+		?>
+		
+		<div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+				<h3 id="myModalLabel"><?php echo $modalHeader; ?></h3>
+			</div>
+			<div class="modal-body">
+				
+				<form class="form-horizontal" id="trabForm">
+					<div class="control-group">
+						<label class="control-label" for="autor">Autor</label>
+						<div class="controls">
+							<input type="text" id="autor" value="<?php echo $dados->autor; ?>" />
+					    </div>
+					</div>
+					<div class="control-group">
+					    <label class="control-label" for="titulo">Título</label>
+					    <div class="controls">
+					    	<input type="password" id="titulo" value="<?php echo $dados->titulo; ?>" />
+					    </div>
+					</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="revista">Revista</label>
+				    	<div class="controls">	
+				    		<input type="text" id="revista" value="<?php echo $dados->revista; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="resumo">Resumo</label>
+				    	<div class="controls">	
+				    		<textarea rows="5" id="resumo"><?php echo $dados->resumo; ?></textarea>
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="volume">Volume</label>
+				    	<div class="controls">	
+				    		<input type="text" id="volume" value="<?php echo $dados->volume; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="revista">Número</label>
+				    	<div class="controls">	
+				    		<input type="text" id="numero" value="<?php echo $dados->numero; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="primeira_pag">Primeira Página</label>
+				    	<div class="controls">	
+				    		<input type="text" id="primeira_pag" value="<?php echo $dados->primeira_pag; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="ultima_pag">Última Página</label>
+				    	<div class="controls">	
+				    		<input type="text" id="ultima_pag" value="<?php echo $dados->ultima_pag; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="ano">Ano</label>
+				    	<div class="controls">	
+				    		<input type="text" id="ano" value="<?php echo $dados->ano; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="chaves">Palavras-chave</label>
+				    	<div class="controls">	
+				    		<input type="text" id="chaves" value="<?php echo $dados->palavras; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="fotocopias">Fotocópias</label>
+				    	<div class="controls">	
+				    		<input type="text" id="fotocopias" value="<?php echo $dados->fotocopias; ?>" />
+				    	</div>
+				 	</div>
+				 	<div class="control-group">
+				    	<label class="control-label" for="arquivo">Arquivo para download</label>
+				    	<div class="controls">	
+				    		<input type="file" id="arquivo" value="<?php echo $dados->arquivos; ?>"/>
+				    	</div>
+				 	</div>
+				</form>
+				
+			</div>
+			<div class="modal-footer">
+				<button class="btn" data-dismiss="modal" aria-hidden="true">Cancelar</button>
+				<button class="btn btn-primary">Salvar alterações</button>
+			</div>
+		</div>
+		
+		<?php
 	}
 	
 } // fim da classe trajCatalogo
