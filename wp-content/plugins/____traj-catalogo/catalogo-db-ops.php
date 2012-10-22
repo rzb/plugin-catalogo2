@@ -12,8 +12,8 @@ class trajCatalogoDBops {
 		// trazendo as chaves
 		if ($totalChaves > 0) {
 			$chaves = $wpdb->get_results(	"SELECT *
-									 		 FROM " . TRAJ_PALAVRAS_TABLE . "
-									 		 ORDER BY palavra ASC ", OBJECT_K );
+									 FROM " . TRAJ_PALAVRAS_TABLE . "
+									 ORDER BY palavra ASC ", OBJECT_K );
 			return $chaves;
 		} else {
 			return FALSE;
@@ -28,11 +28,11 @@ class trajCatalogoDBops {
 		if ($totalTrabs > 0) {
 			if (!$offset) $offset = 0;
 			if (!$limit) $limit = 20;
-			$trabalhos = $wpdb->get_results("SELECT *
-										  	 FROM " . TRAJ_TRABALHOS_TABLE . "
-											 ORDER BY autor ASC
-											 LIMIT $limit
-											 OFFSET $offset", OBJECT_K );
+			$trabalhos = $wpdb->get_results( "SELECT *
+										  FROM " . TRAJ_TRABALHOS_TABLE . "
+					ORDER BY autor ASC
+					LIMIT $limit
+					OFFSET $offset", OBJECT_K );
 			return $trabalhos;
 		} else {
 			return FALSE;
@@ -44,10 +44,8 @@ class trajCatalogoDBops {
 		global $wpdb;
 	
 		$trabalho = $wpdb->get_row( "SELECT *
-									 FROM " . TRAJ_TRABALHOS_TABLE . "
-									 WHERE id = " . $id, OBJECT );
-		
-		return $trabalho;
+								 FROM " . TRAJ_TRABALHOS_TABLE . "
+				WHERE id = '$id'");
 	}
 	
 	public static function setTrabalho( $stuff ) {
