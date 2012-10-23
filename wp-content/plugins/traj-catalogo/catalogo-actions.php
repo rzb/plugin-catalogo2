@@ -26,9 +26,12 @@ function prepareData(){
 }
 	
 if ( current_user_can('manage_options') ) {
+
+	$dados	= prepareData();
 	
-	$option = $_POST['option'];
-	$dados = prepareData();
+	$option		= $_POST['option'];
+	$chaveID	= $_POST['chaveID'];
+	$palavra	= $_POST['palavra'];
 	
 	switch ($option) {
 		case "new_trab":
@@ -46,6 +49,20 @@ if ( current_user_can('manage_options') ) {
 			$res = trajCatalogoDBops::delTrabalho( $dados );
 			if(!res)
 				echo "error";
+			break;
+			
+		case "new_chave":
+			$res = trajCatalogoDBops::setChave( array("palavra" => $palavra) );
+			if(!res)
+				echo "error";
+			break;	
+			
+		case "edit_chave":
+			
+			break;
+			
+		case "del_chave":
+			
 			break;
 			
 		default:

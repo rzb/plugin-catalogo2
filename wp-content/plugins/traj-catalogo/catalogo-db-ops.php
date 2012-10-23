@@ -20,6 +20,46 @@ class trajCatalogoDBops {
 		}
 	}
 	
+	public static function getAllChavesByTrab($trabID) {
+		global $wpdb;
+		
+		$ids = $wpdb->get_var( 
+			$wpdb->prepare(	
+				"SELECT palavra_ids 
+				 FROM ". TRAJ_TRABALHOS_TABLE ." 
+				 WHERE id = $trabID"
+			) 
+		);
+		
+		$ids = substr_replace("'" . str_replace(",", "',", $ids) ,"",-1);
+		
+		$chaves = $wpdb->get_results(	
+			"SELECT * 
+			 FROM ". TRAJ_PALAVRAS_TABLE ." 
+			 WHERE id IN (".$ids.")", 
+			 ARRAY_K
+		);
+		
+		return $chaves;
+		
+	}
+	
+	public static function getChaveIDsByTrab($trabID) {
+		global $wpdb;
+		
+		$ids = $wpdb->get_var( 
+			$wpdb->prepare(	
+				"SELECT palavra_ids 
+				 FROM ". TRAJ_TRABALHOS_TABLE ." 
+				 WHERE id = $trabID"
+			) 
+		);
+		
+		$ids = explode(',', substr_replace($ids,"",-1));
+		
+		return $ids;
+	}
+	
 	public static function getAllTrabalhos($offset=NULL, $limit=NULL) {
 		global $wpdb;
 		// contando publicações...
@@ -58,8 +98,18 @@ class trajCatalogoDBops {
 			$stuff["dados"]["data_criacao"] = $now;
 			$stuff["dados"]["data_modificacao"] = $now;
 	
-			return $wpdb->insert( TRAJ_TRABALHOS_TABLE, $stuff["dados"]);
+			return $wpdb->insert( TRAJ_TRABALHOS_TABLE, $stuff["dados"] );
 	
+		} else {
+			return FALSE;
+		}
+	}
+	
+	public static function setChave( $palavra ) {
+		global $wpdb;
+		
+		if( $palavra != NULL ) {
+			return $wpdb->insert( TRAJ_PALAVRAS_TABLE, $palavra );
 		} else {
 			return FALSE;
 		}

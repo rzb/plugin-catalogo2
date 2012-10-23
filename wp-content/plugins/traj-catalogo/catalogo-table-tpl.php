@@ -8,7 +8,7 @@ $trabalhos = trajCatalogoDBops::getAllTrabalhos();
 
 ?>
 
-<table class="table-padrao table-catalogo table-admin">
+<table class="table-padrao table-catalogo table-admin" id="table_publicacoes">
 	<caption>Trabalhos publicados</caption>
 	<thead>
 		<tr>
