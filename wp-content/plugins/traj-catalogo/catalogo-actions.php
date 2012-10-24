@@ -62,7 +62,9 @@ if ( current_user_can('manage_options') ) {
 			break;
 			
 		case "del_chave":
-			
+			$res = trajCatalogoDBops::delChave( array("id" => $chaveID) );
+			if(!res)
+				echo "error";
 			break;
 			
 		default:

@@ -60,7 +60,7 @@ class trajCatalogoDBops {
 		return $ids;
 	}
 	
-	public static function getAllTrabalhos($offset=NULL, $limit=NULL) {
+	public static function getAllTrabalhos($offset=NULL) {
 		global $wpdb;
 		// contando publicações...
 		$totalTrabs = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM " . TRAJ_TRABALHOS_TABLE ) );
@@ -71,7 +71,7 @@ class trajCatalogoDBops {
 			$trabalhos = $wpdb->get_results("SELECT *
 										  	 FROM " . TRAJ_TRABALHOS_TABLE . "
 											 ORDER BY autor ASC
-											 LIMIT $limit
+											 LIMIT 15
 											 OFFSET $offset", OBJECT_K );
 			return $trabalhos;
 		} else {
@@ -133,12 +133,38 @@ class trajCatalogoDBops {
 	
 	public static function delTrabalho( $stuff ) {
 		global $wpdb;
-		$now = NowDatetime();
+		
 		if ( $stuff != NULL ) {
 			return $wpdb->delete( TRAJ_TRABALHOS_TABLE, $stuff["where"]);
 		} else {
 			return FALSE;
 		}
+	}
+	
+	public static function delChave( $id ) {
+		global $wpdb;
+		
+		if ( $id != NULL ) {
+			return $wpdb->delete( TRAJ_PALAVRAS_TABLE, $id);
+		} else {
+			return FALSE;
+		}
+	}
+	
+	public static function getTotalTrabalhos() {
+		global $wpdb;
+		
+		$total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(id) FROM " .TRAJ_TRABALHOS_TABLE));
+		
+		return $total;
+	}
+	
+	public static function getTotalChaves() {
+		global $wpdb;
+		
+		$total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(id) FROM " .TRAJ_PALAVRAS_TABLE));
+		
+		return $total;
 	}
 	
 }

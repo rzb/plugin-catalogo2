@@ -15,10 +15,10 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
 ?>
 
 <form class="form-horizontal" id="trabForm">
-
-	<input type="hidden" name="option" value="<?php echo $option; ?>" />
 	
 	<input type="hidden" name="id" value="<?php echo $trab->id; ?>" />
+	
+	<input type="hidden" name="option" value="<?php echo $option; ?>" />
 
 	<div class="control-group">
 		<label class="control-label" for="autor">Autor</label>

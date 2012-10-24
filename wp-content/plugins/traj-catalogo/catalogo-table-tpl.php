@@ -4,7 +4,22 @@ require_once('../../../wp-load.php');
 require_once('catalogo-config.php');
 require_once('catalogo-db-ops.php');
 
-$trabalhos = trajCatalogoDBops::getAllTrabalhos();    
+$total = trajCatalogoDBops::getTotalTrabalhos();
+$totalPags = ceil($total / 15);
+
+if(isset( $_POST['pagina'] )) {
+	if( $_POST['pagina'] > $totalPags ) {
+		$pagina = $totalPags;
+	} else {
+		$pagina = $_POST['pagina'];
+	}
+} else {
+	$pagina = 1;
+}
+
+$offset = ($pagina-1) * 15;
+$trabalhos = trajCatalogoDBops::getAllTrabalhos($offset);   
+$last = $offset + sizeof($trabalhos);
 
 ?>
 
@@ -25,6 +40,16 @@ $trabalhos = trajCatalogoDBops::getAllTrabalhos();
 				<input type="button" value="Novo" class="edit-table" id="new_trab" />
 				<input type="button" value="Alterar" class="edit-table" id="edit_trab" />
 				<input type="button" value="Excluir" class="edit-table" id="del_trab" />
+				<div class="tfoot-info table-pagination" >
+					<input type="button" class="pagination" id="first_pag" value="Primeira" <?php if($offset === 0) echo 'disabled="disabled"'; ?> />
+					<input type="button" class="pagination" id="previous_pag" value="Anterior" <?php if($offset === 0) echo 'disabled="disabled"'; ?> />
+					<input type="text" class="pagination" id="custom_pag" value="<?php echo $pagina; ?>" />
+					<input type="button" class="pagination" id="next_pag" value="Próxima" <?php if($last == $total) echo 'disabled="disabled"'; ?> />
+					<input type="button" class="pagination" id="last_pag" value="Última" <?php if($last == $total) echo 'disabled="disabled"'; ?> />
+					<input type="hidden" id="current_pag" value="<?php echo $pagina; ?>" />
+					<input type="hidden" id="total_pag" value="<?php echo $totalPags; ?>" />
+				</div>
+				<div class="tfoot-info table-results" >Publicação <span><?php echo $offset+1; ?></span> à <span><?php echo $last; ?></span> de <span><?php echo $total; ?></span></div>
 			</td>
 		</tr>
 	</tfoot>
