@@ -37,7 +37,7 @@ class trajCatalogoDBops {
 			"SELECT * 
 			 FROM ". TRAJ_PALAVRAS_TABLE ." 
 			 WHERE id IN (".$ids.")", 
-			 ARRAY_K
+			 OBJECT_K
 		);
 		
 		return $chaves;
@@ -55,7 +55,7 @@ class trajCatalogoDBops {
 			) 
 		);
 		
-		$ids = explode(',', substr_replace($ids,"",-1));
+		$ids = explode(',', $ids);
 		
 		return $ids;
 	}
@@ -105,11 +105,17 @@ class trajCatalogoDBops {
 		}
 	}
 	
-	public static function setChave( $palavra ) {
+	public static function setChaves( $data ) {
 		global $wpdb;
 		
-		if( $palavra != NULL ) {
-			return $wpdb->insert( TRAJ_PALAVRAS_TABLE, $palavra );
+		if ( $data != NULL ) {
+	
+			$data = explode(',', $data);
+			
+			foreach ($data as $palavra) {
+				$wpdb->insert( TRAJ_PALAVRAS_TABLE, array("palavra" => $palavra) );
+			}
+	
 		} else {
 			return FALSE;
 		}
@@ -127,8 +133,16 @@ class trajCatalogoDBops {
 		} else {
 			return FALSE;
 		}
+	}
 	
-	
+	public static function editChave( $data, $where ) {
+		global $wpdb;
+		
+		if( $data != NULL && $where != NULL ) {
+			return $wpdb->update( TRAJ_PALAVRAS_TABLE, $data, $where );
+		} else {
+			return FALSE;
+		}
 	}
 	
 	public static function delTrabalho( $stuff ) {

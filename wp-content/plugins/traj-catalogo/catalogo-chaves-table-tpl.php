@@ -36,7 +36,7 @@ $chaves = trajCatalogoDBops::getAllChaves();
 			<td class="td-id"></td>
 			<td>
 				<input type="text" id="new_palavra" />
-				<input type="button" id="send_chave" value="Criar" />
+				<input type="button" id="send_chave" value="Salvar" />
 				<input type="button" id="cancel_chave" value="Cancelar" />
 			</td>
 		</tr>

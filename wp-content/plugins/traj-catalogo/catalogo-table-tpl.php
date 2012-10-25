@@ -21,6 +21,9 @@ $offset = ($pagina-1) * 15;
 $trabalhos = trajCatalogoDBops::getAllTrabalhos($offset);   
 $last = $offset + sizeof($trabalhos);
 
+if($_POST['editable'] === "true") $editable = TRUE;
+else $editable = FALSE;
+
 ?>
 
 <table class="table-padrao table-catalogo table-admin" id="table_publicacoes">
@@ -37,9 +40,11 @@ $last = $offset + sizeof($trabalhos);
 	<tfoot>
 		<tr>
 			<td colspan="5">
+			<?php if($editable) : ?>
 				<input type="button" value="Novo" class="edit-table" id="new_trab" />
 				<input type="button" value="Alterar" class="edit-table" id="edit_trab" />
 				<input type="button" value="Excluir" class="edit-table" id="del_trab" />
+			<?php endif; ?>
 				<div class="tfoot-info table-pagination" >
 					<input type="button" class="pagination" id="first_pag" value="Primeira" <?php if($offset === 0) echo 'disabled="disabled"'; ?> />
 					<input type="button" class="pagination" id="previous_pag" value="Anterior" <?php if($offset === 0) echo 'disabled="disabled"'; ?> />

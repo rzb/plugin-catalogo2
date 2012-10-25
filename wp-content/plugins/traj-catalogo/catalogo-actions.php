@@ -5,6 +5,9 @@ require_once('catalogo-config.php');
 require_once('catalogo-db-ops.php');
 	
 function prepareData(){
+
+	$palavraIDs = implode(",", $_POST['selected_chaves']);
+	
 	$stuff["dados"] = array(
 			"autor" => $_POST['autor'],
 			"titulo" => $_POST['titulo'],
@@ -15,7 +18,7 @@ function prepareData(){
 			"primeira_pag" => $_POST['primeira_pag'],
 			"ultima_pag" => $_POST['ultima_pag'],
 			"ano" => $_POST['ano'],
-			"palavra_ids" => $_POST['chaves'],
+			"palavra_ids" => $palavraIDs,
 			"fotocopias" => $_POST['fotocopias'],
 			"arquivos" => $_POST['arquivos'],
 			"downloads_count" => 0
@@ -52,13 +55,15 @@ if ( current_user_can('manage_options') ) {
 			break;
 			
 		case "new_chave":
-			$res = trajCatalogoDBops::setChave( array("palavra" => $palavra) );
+			$res = trajCatalogoDBops::setChaves( $palavra );
 			if(!res)
 				echo "error";
 			break;	
 			
 		case "edit_chave":
-			
+			$res = trajCatalogoDBops::editChave( array("palavra" => $palavra), array("id" => $chaveID) );
+			if(!res)
+				echo "error";
 			break;
 			
 		case "del_chave":

@@ -75,19 +75,29 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
     	</div>
  	</div>
  	<div class="control-group">
-    	<label class="control-label" for="chaves">Palavras-chave</label>
+    	<label class="control-label" for="chaves">Palavras-chave disponíveis</label>
     	<div class="controls">
-    		<select name="chaves" multiple="multiple">
+    		<select name="chaves[]" id="chaves" multiple="multiple">
 			<?php if($chaves) foreach ($chaves as $c): ?>
-				<option id="<?php echo $c->id; ?>" value="<?php echo $c->palavra; ?>" <?php if(in_array($c->id, $chosenChaves)) echo 'selected="selected"' ?> ><?php echo $c->palavra; ?></option>
+				<?php if(is_array($chosenChaves) && in_array($c->id, $chosenChaves)) continue; ?>
+				<option value="<?php echo $c->id; ?>" ><?php echo $c->palavra; ?></option>
 			<?php endforeach; ?>
 			</select>
-			<button class="btn" id="add_chave">-></button>
-			<button class="btn" id="rem_chave"><-</button>
-			<select name="selected_chaves" multiple="multiple">
+		</div>
+ 	</div>
+ 	<div class="control-group">
+    	<div class="controls">
+			<button class="btn" id="add_chave">adicionar</button>
+			<button class="btn" id="rem_chave">remover</button>
+		</div>
+ 	</div>		
+	<div class="control-group">
+    	<label class="control-label" for="selected_chaves">Palavras-chave selecionadas</label>
+    	<div class="controls">		
+			<select name="selected_chaves[]" id="selected_chaves" multiple="multiple">
 			<?php if($chaves) foreach ($chaves as $c): ?>
-				<?php if(in_array($c->id, $chosenChaves)) : ?>
-					<option id="<?php echo $c->id; ?>" value="<?php echo $c->palavra; ?>" ><?php echo $c->palavra; ?></option>
+				<?php if(is_array($chosenChaves) && in_array($c->id, $chosenChaves)) : ?>
+					<option value="<?php echo $c->id; ?>" ><?php echo $c->palavra; ?></option>
 				<?php endif; ?>
 			<?php endforeach; ?>
 			</select>
@@ -106,3 +116,34 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
     	</div>
  	</div>
 </form>
+
+<script type="text/javascript">
+	jQuery('#add_chave').click(function(e){
+		e.preventDefault();
+		jQuery('#chaves option').filter(":selected").appendTo('#selected_chaves');
+		
+		var mySelect = jQuery('#selected_chaves');
+		var myOptions = jQuery('#selected_chaves option');
+		sortAfterMoved(mySelect, myOptions);
+	});
+
+	jQuery('#rem_chave').click(function(e){
+		e.preventDefault();
+		jQuery('#selected_chaves option').filter(":selected").appendTo('#chaves');
+
+		var mySelect = jQuery('#chaves');
+		var myOptions = jQuery('#chaves option');
+		sortAfterMoved(mySelect, myOptions);
+	});
+
+function sortAfterMoved(select, options) {
+
+	options.sort(function(a,b) {
+	    if (a.text > b.text) return 1;
+	    else if (a.text < b.text) return -1;
+	    else return 0;
+	});
+
+	select.empty().append( options );
+}	
+</script>
