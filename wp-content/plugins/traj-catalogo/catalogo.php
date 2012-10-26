@@ -113,7 +113,10 @@ class trajCatalogo {
 					
 					var pluginURL = '<?php echo plugin_dir_url(dirname(__FILE__) . '/catalogo.php'); ?>';
 					
-					loadPublicacoes(pluginURL, true);
+					loadPublicacoes({
+								url			:	pluginURL,
+								editable	:	true
+					});
 					loadChaves(pluginURL);	
 				});
 			
@@ -169,7 +172,9 @@ class trajCatalogo {
 					
 					var pluginURL = '<?php echo plugin_dir_url(dirname(__FILE__) . '/catalogo.php'); ?>';
 					
-					loadPublicacoes(pluginURL);
+					loadPublicacoes({
+						url:pluginURL
+					});
 				});
 			
 			</script>

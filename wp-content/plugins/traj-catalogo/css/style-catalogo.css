@@ -1,1 +1,4 @@
 .hidden{display:none;}
+
+tr.selected{background-color: lightblue;}
+tr.catalogo:hover, tr.catalogo-chave:hover{cursor:pointer;}

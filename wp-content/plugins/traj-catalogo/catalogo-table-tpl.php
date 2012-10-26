@@ -4,25 +4,34 @@ require_once('../../../wp-load.php');
 require_once('catalogo-config.php');
 require_once('catalogo-db-ops.php');
 
-$total = trajCatalogoDBops::getTotalTrabalhos();
-$totalPags = ceil($total / 15);
+$limit = 15; // alterar para $_POST['limit'] caso queira dar opção a usuário de entrar com limite de resultados por página
 
-if(isset( $_POST['pagina'] )) {
-	if( $_POST['pagina'] > $totalPags ) {
+$total = trajCatalogoDBops::getTotalTrabalhos(); // alterar query entrando parâmetro filter caso haja
+$totalPags = ceil($total / $limit);
+
+
+if($_POST['filter'] == 'false') $filters = NULL;
+else $filters = explode(',',$_POST['filter']);
+
+
+if(isset( $_POST['page'] )) {
+	if( $_POST['page'] > $totalPags ) {
 		$pagina = $totalPags;
 	} else {
-		$pagina = $_POST['pagina'];
+		$pagina = $_POST['page'];
 	}
 } else {
 	$pagina = 1;
 }
 
-$offset = ($pagina-1) * 15;
-$trabalhos = trajCatalogoDBops::getAllTrabalhos($offset);   
+$offset = ($pagina-1) * $limit;
+
+$trabalhos = trajCatalogoDBops::getAllTrabalhos($offset, $limit, $filters);   
 $last = $offset + sizeof($trabalhos);
 
 if($_POST['editable'] === "true") $editable = TRUE;
 else $editable = FALSE;
+
 
 ?>
 
@@ -45,6 +54,7 @@ else $editable = FALSE;
 				<input type="button" value="Alterar" class="edit-table" id="edit_trab" />
 				<input type="button" value="Excluir" class="edit-table" id="del_trab" />
 			<?php endif; ?>
+				<input type="button" value="Filtrar" class="edit-table" id="filter_trab" />
 				<div class="tfoot-info table-pagination" >
 					<input type="button" class="pagination" id="first_pag" value="Primeira" <?php if($offset === 0) echo 'disabled="disabled"'; ?> />
 					<input type="button" class="pagination" id="previous_pag" value="Anterior" <?php if($offset === 0) echo 'disabled="disabled"'; ?> />
@@ -59,7 +69,7 @@ else $editable = FALSE;
 		</tr>
 	</tfoot>
 	<tbody>
-		<?php if ($trabalhos) foreach ($trabalhos as $trab) { ?>
+		<?php if ($trabalhos) foreach ($trabalhos as $trab) : ?>
 		<tr class="catalogo" id="item-<?php echo $trab->id; ?>">
 			<td class="td-autor"><?php echo $trab->autor; ?></td>
 			<td class="td-titulo"><?php echo $trab->titulo; ?></td>
@@ -67,6 +77,6 @@ else $editable = FALSE;
 			<td class="td-data td-data_criacao"><?php echo $trab->data_criacao; ?></td>
 			<td class="td-data td-data_modificacao"><?php echo $trab->data_modificacao; ?></td>
 		</tr>
-		<?php } ?>
+		<?php endforeach; ?>
 	</tbody>
 </table>

@@ -16,9 +16,9 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
 
 <form class="form-horizontal" id="trabForm">
 	
-	<input type="hidden" name="id" value="<?php echo $trab->id; ?>" />
-	
 	<input type="hidden" name="option" value="<?php echo $option; ?>" />
+ <?php if ($option != "filter_trab") : ?>	
+	<input type="hidden" name="id" value="<?php echo $trab->id; ?>" />
 
 	<div class="control-group">
 		<label class="control-label" for="autor">Autor</label>
@@ -75,6 +75,19 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
     	</div>
  	</div>
  	<div class="control-group">
+    	<label class="control-label" for="fotocopias">Fotocópias</label>
+    	<div class="controls">	
+    		<input type="text" name="fotocopias" id="fotocopias" value="<?php echo $trab->fotocopias; ?>" />
+    	</div>
+ 	</div>
+ 	<div class="control-group">
+    	<label class="control-label" for="arquivo">Arquivo para download</label>
+    	<div class="controls">	
+    		<input type="file" name="arquivo" id="arquivo" value="<?php echo $trab->arquivos; ?>"/>
+    	</div>
+ 	</div>
+ <?php endif; ?>
+ 	<div class="control-group">
     	<label class="control-label" for="chaves">Palavras-chave disponíveis</label>
     	<div class="controls">
     		<select name="chaves[]" id="chaves" multiple="multiple">
@@ -101,18 +114,6 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
 				<?php endif; ?>
 			<?php endforeach; ?>
 			</select>
-    	</div>
- 	</div>
- 	<div class="control-group">
-    	<label class="control-label" for="fotocopias">Fotocópias</label>
-    	<div class="controls">	
-    		<input type="text" name="fotocopias" id="fotocopias" value="<?php echo $trab->fotocopias; ?>" />
-    	</div>
- 	</div>
- 	<div class="control-group">
-    	<label class="control-label" for="arquivo">Arquivo para download</label>
-    	<div class="controls">	
-    		<input type="file" name="arquivo" id="arquivo" value="<?php echo $trab->arquivos; ?>"/>
     	</div>
  	</div>
 </form>
