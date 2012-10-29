@@ -19,9 +19,9 @@ $chaves = trajCatalogoDBops::getAllChaves();
 	<tfoot>
 		<tr>
 			<td colspan="2">
-				<input type="button" value="Novo" class="edit-table" id="new_chave" />
-				<input type="button" value="Alterar" class="edit-table" id="edit_chave" />
-				<input type="button" value="Excluir" class="edit-table" id="del_chave" />
+				<button class="edit-table btn btn-inverse" id="new_chave"><i class="icon-plus-sign icon-white"></i></button>
+				<button class="edit-table btn btn-inverse" id="edit_chave"><i class="icon-edit icon-white"></i></button>
+				<button class="edit-table btn btn-inverse" id="del_chave"><i class="icon-trash icon-white"></i></button>
 			</td>
 		</tr>
 	</tfoot>

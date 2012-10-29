@@ -12,23 +12,26 @@ jQuery.fn.visibilityToggle = function() {
         return (visibility == 'visible') ? 'hidden' : 'visible';
     });
 };
+
+
 				
 					
 function loadPublicacoes(options) {
+	var ajaxIndicator = '<div id="loading" style="height: 100%; background: url(' + options['url'] + 'img/ajax-loader.gif) no-repeat scroll center center;"></div>';
 	// opções padrão
 	var defaultArgs = {
 			url			:	'http://www.pudim.com.br',
 			editable	:	false,
 			filter		:	false,
 			page		:	1
-	}
+	};
 	// atribuindo opções padrão para as opções omitidas na chamada da função
 	for(var key in defaultArgs) {
 		if(typeof options[key] == "undefined") options[key] = defaultArgs[key];
 	}
 	
 	// tabela de publicações 
-	jQuery('#trabs_placeholder').load(options['url']+'catalogo-table-tpl.php', {page : options['page'], editable : options['editable'], filter : options['filter']}, function(response, status, xhr) {
+	jQuery('#trabs_placeholder').html(ajaxIndicator).load(options['url']+'catalogo-table-tpl.php', {page : options['page'], editable : options['editable'], filter : options['filter']}, function(response, status, xhr) {
 		if (status == "error") {
 	    	var msg = 'Desculpe, mas ocorreu um erro. Reporte-o ao administrador: ';
 	    	jQuery(this).html(msg + xhr.status + ' ' + xhr.statusText);
@@ -50,7 +53,7 @@ function loadPublicacoes(options) {
 			});
 
 			// trocando de página pelos botões 
-			jQuery('.pagination').unbind('click').bind('click', function() {
+			jQuery('.paginate').unbind('click').bind('click', function() {
 				var option = jQuery(this).attr('id');
 				switch (option) {
 					case 'first_pag':
@@ -84,12 +87,30 @@ function loadPublicacoes(options) {
 			});
 			
 		  	// identificando opção clicada 
-		  	jQuery('#table_publicacoes input.edit-table').unbind('click').bind('click', function() {
+		  	jQuery('#table_publicacoes button.edit-table').unbind('click').bind('click', function() {
 				var option = jQuery(this).attr('id');
 				var data = null;
 				var dlg = jQuery('#catalogo_dialog');
 				
 				switch (option) {
+					case 'down_trab':
+						if(!itemID){
+							alert('Selecione uma publicação!');
+						} else {
+							var link = jQuery('tr.catalogo.selected').find('input.download-link').val();
+							if (typeof link == 'undefined') alert('Não há download para essa publicação!');
+							else window.location.href = link;
+							data = {itemID : itemID, option : option};
+							jQuery.post(options['url']+'catalogo-actions.php', data, function(data) {
+						    	if(data=="error") {
+							    	alert("Ocorreu um erro ao tentar realizar a ação!");
+						    	} else {
+						    		option = undefined;
+						    	}
+							});
+						}
+						break;
+						
 					case 'del_trab':
 						if(!itemID) {
 							alert('Selecione uma publicação!');
@@ -130,7 +151,6 @@ function loadPublicacoes(options) {
 						if(!itemID) {
 							alert('Selecione uma publicação!');
 						} else {
-							data = {itemID : itemID, option : option};
 							dlg.dialog("option", "title", "Alterar publicação");
 							dlg.dialog("option", "buttons", [
 								{
@@ -158,12 +178,13 @@ function loadPublicacoes(options) {
 									}
 								}
 							]);
-							dlg.load(options['url']+'catalogo-form-tpl.php', data).dialog('open');
+							
+							data = {itemID : itemID, option : option};
+							dlg.html(ajaxIndicator).load(options['url']+'catalogo-form-tpl.php', data, createUploader).dialog('open');
 						}
 						break;
 						
 					case 'new_trab':
-						data = {option : option};
 						dlg.dialog("option", "title", "Nova publicação");
 						dlg.dialog("option", "buttons", [
 							{
@@ -179,6 +200,12 @@ function loadPublicacoes(options) {
 								'click' : function() {
 									// publicar conteúdo e recarregar tabela de catálogos 
 									jQuery('#selected_chaves option').attr('selected', 'selected');
+									var files = '';
+									jQuery('.uploaded-files').each(function(i){
+						    			files += jQuery(this).val() + ',';
+						    		});
+									files = files.slice(0, - 1);
+									jQuery('#arquivos').val(files);
 									jQuery.post(options['url']+'catalogo-actions.php', jQuery('#trabForm').serialize(), function(data) {
 								    	if(data=="error") {
 									    	alert("Ocorreu um erro ao tentar realizar a ação!");
@@ -191,10 +218,11 @@ function loadPublicacoes(options) {
 								}
 							}
 						]);
-						dlg.load(options['url']+'catalogo-form-tpl.php', data).dialog('open');
+						
+						data = {option : option};
+						dlg.html(ajaxIndicator).load(options['url']+'catalogo-form-tpl.php', data, createUploader).dialog('open');
 						break;
 					case 'filter_trab':
-						data = {option : option};
 						dlg.dialog("option", "title", "Filtrar publicações");
 						dlg.dialog("option", "buttons", [
 							{
@@ -215,15 +243,20 @@ function loadPublicacoes(options) {
 						    		jQuery('#selected_chaves option').each(function(i){
 						    			opts += jQuery(this).val() + ',';
 						    		});
-						    		options['filter'] = opts.slice(0, - 1);
-						    		alert(options['filter']);
+						    		options['filter'] = {
+						    				chaves	:	opts.slice(0, - 1),
+						    				autor	:	jQuery('#autor').val()
+						    		};
+
 						    		loadPublicacoes(options);
 
 									jQuery(this).dialog('close');
 								}
 							}
-						]);
-						dlg.load(options['url']+'catalogo-form-tpl.php', data).dialog('open');
+						]);						
+						
+						data = {option : option, filters : options['filter']};
+						dlg.html(ajaxIndicator).load(options['url']+'catalogo-form-tpl.php', data).dialog('open');
 						break;
 				}
 			});
@@ -235,7 +268,9 @@ function loadPublicacoes(options) {
 
 // tabela de palavras-chave 
 function loadChaves(url) {
-	jQuery("#chaves_placeholder").load(url+'catalogo-chaves-table-tpl.php', function(response, status, xhr) {
+	var ajaxIndicator = '<div id="loading" style="height: 100%; background: url(' + url + 'img/ajax-loader.gif) no-repeat scroll center center;"></div>';
+	
+	jQuery("#chaves_placeholder").html(ajaxIndicator).load(url+'catalogo-chaves-table-tpl.php', function(response, status, xhr) {
 		if (status == "error") {
 	    	var msg = 'Desculpe, mas ocorreu um erro. Reporte-o ao administrador: ';
 	    	jQuery(this).html(msg + xhr.status + ' ' + xhr.statusText);
@@ -249,7 +284,7 @@ function loadChaves(url) {
 				chaveID = chaveID[1];
 			});
 			// identificando opção clicada 
-			jQuery('#table_chaves input.edit-table').unbind('click').bind('click', function(event) {
+			jQuery('#table_chaves button.edit-table').unbind('click').bind('click', function(event) {
 				var option	= jQuery(this).attr('id');
 				var data	= null;
 				var linha	= jQuery('tr.selected');
@@ -318,3 +353,4 @@ function loadChaves(url) {
 	});
 
 }
+

@@ -7,7 +7,12 @@ require_once('catalogo-db-ops.php');
 $option = $_POST['option'];
 if ($option == "edit_trab") {
 	$trab			= trajCatalogoDBops::getTrabalho($_POST['itemID']);
+	$autor			= $trab->autor;
 	$chosenChaves	= trajCatalogoDBops::getChaveIDsByTrab($trab->id);
+	$files			= @explode(',', $trab->arquivos);
+} elseif ($option == "filter_trab" && is_array($_POST['filters'])) {
+	if (isset($_POST['filters']['autor']))	$autor			= $_POST['filters']['autor'];
+	if (isset($_POST['filters']['chaves']))	$chosenChaves	= explode(',', $_POST['filters']['chaves']);
 }
 
 $chaves 			= trajCatalogoDBops::getAllChaves();
@@ -17,15 +22,18 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
 <form class="form-horizontal" id="trabForm">
 	
 	<input type="hidden" name="option" value="<?php echo $option; ?>" />
- <?php if ($option != "filter_trab") : ?>	
-	<input type="hidden" name="id" value="<?php echo $trab->id; ?>" />
-
+	
 	<div class="control-group">
 		<label class="control-label" for="autor">Autor</label>
 		<div class="controls">
-			<input type="text" name="autor" id="autor" value="<?php echo $trab->autor; ?>" />
+			<input type="text" name="autor" id="autor" value="<?php echo stripslashes(sanitize_text_field($autor)); ?>" />
 	    </div>
 	</div>
+ <?php if ($option != "filter_trab") : ?>	
+	<input type="hidden" name="id" value="<?php echo $trab->id; ?>" />
+	
+	<input type="hidden" name="arquivos" id="arquivos" />
+
 	<div class="control-group">
 	    <label class="control-label" for="titulo">Título</label>
 	    <div class="controls">
@@ -81,9 +89,16 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
     	</div>
  	</div>
  	<div class="control-group">
-    	<label class="control-label" for="arquivo">Arquivo para download</label>
-    	<div class="controls">	
-    		<input type="file" name="arquivo" id="arquivo" value="<?php echo $trab->arquivos; ?>"/>
+    	<label class="control-label" for="fineuploader">Arquivo para download</label>
+    	<div class="controls">
+    		<div id="fineuploader" class="btn btn-success">
+				<i class="icon-upload icon-white"></i> Selecione ou arraste um arquivo
+			</div>
+		<?php if(is_array($files)) foreach ($files as $f) : ?>
+			<input type="hidden" class="uploaded-files" value="<?php echo $f; ?>" />
+			<p class="old-files"><?php echo $f; ?></p>
+		<?php endforeach; ?>
+    		<div id="fineuploader_messages"></div>
     	</div>
  	</div>
  <?php endif; ?>
@@ -103,7 +118,7 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
 			<button class="btn" id="add_chave">adicionar</button>
 			<button class="btn" id="rem_chave">remover</button>
 		</div>
- 	</div>		
+ 	</div>
 	<div class="control-group">
     	<label class="control-label" for="selected_chaves">Palavras-chave selecionadas</label>
     	<div class="controls">		
@@ -117,6 +132,8 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
     	</div>
  	</div>
 </form>
+
+
 
 <script type="text/javascript">
 	jQuery('#add_chave').click(function(e){
@@ -146,5 +163,6 @@ function sortAfterMoved(select, options) {
 	});
 
 	select.empty().append( options );
-}	
+}
+  
 </script>

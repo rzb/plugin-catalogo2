@@ -253,4 +253,83 @@ function checkbox_to_bool($val)
 	return ($val == 'on');
 }
 
- ?>
+###############################################################################################################
+
+
+	/*
+	 * # FUNCTION: processUploads
+	 * # DESCRIPTION:
+	 * 	- optional $allowedMimetypes array of strings (mime types to allow)
+	 * 	- optional $maxFilesize integer (size limit for each file)
+	 * 
+	 * 	- sanitize file name
+	 * 	- resolve allowed file extensions
+	 * 	- check file size (limit = 10mb)
+	 * 	- check if file name already exists
+	 * 	- copy file from temp dir to uploads folder
+	 * 
+	 * 	- return array of processed filenames
+	 */
+
+function processUploads( $allowedMimetypes, $maxFilesize ) {
+		
+	$files = $_FILES['file'];
+	$processedFiles = NULL;
+	
+	if ( is_array( $files ) ) {
+		
+		foreach ( $files['name'] as $key => $value ) {
+			
+			// we will work only with successfully uploaded files
+			if ( $files['error'][$key] == 0 ) {
+				
+				// full actual file name (it'll be sanitized later)
+				$filename = $files['name'][$key];
+				// get the file mime and extension
+				$filetype = wp_check_filetype( $filename );
+				// check if file is allowed by mime type. If it's not allowed, echo the error and move to next file			
+				if ( !in_array( $filetype['type'], $allowedMimetypes ) ) {
+					echo "Falha no envio do arquivo '$filename'. Verifique se a extensao corresponde a uma das permitidas.";
+					continue;
+				}
+				// get the file size
+				$filesize = $files['size'][$key];
+				// check if file size exceeds $maxFilesize. If it does, echo the error end move to next file
+				if ( $filesize > $maxFilesize ) {
+					echo "Falha no envio do arquivo '$filename'. O tamanho ultrapassou o limite.";
+					continue;
+				}		
+				// temporary file name assigned by the server
+				$filetmp = $files['tmp_name'][$key];
+				// drop the extension, sanitize file name and remove accents, we need just the clean title
+				$filetitle = remove_accents( sanitize_file_name( basename( $filename, '.'.$filetype['ext'] ) ) );
+				// construct fresh new sanitized file name
+				$filename = $filetitle.'.'.$filetype['ext'];
+				// all processed files will be found here
+				$upload_dir = plugin_dir_path( __FILE__ ).'uploads';
+				// resolve existing file names by adding '_$i', where $i is the number of times it has just repeated 
+				$i = 1;
+				while ( file_exists( $upload_dir.'/'.$filename ) ) {
+					$filename = $filetitle.'_'.$i.'.'.$filetype['ext'];
+					$i++;
+				}
+				// final file path
+				$filedest = $upload_dir.'/'.$filename;
+				// move the file from temp dir to final file path
+				if ( !copy( $filetmp, $filedest ) ) {
+					echo "O arquivo '$filename' não pôde ser copiado para a pasta destino.";
+				}
+				
+				$processedFiles[] = $filename;
+				
+			}
+			
+		}
+		
+	}
+	
+	return $processedFiles;
+	
+}
+
+?>

@@ -51,15 +51,18 @@ class trajCatalogo {
 		wp_enqueue_style( 'catalogo-style-css' );
 		wp_register_style('jquery-ui-css', 'http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.2/themes/smoothness/jquery-ui.css', TRUE );
 		wp_enqueue_style( 'jquery-ui-css' );
-		wp_register_style( 'bootstrap-css', plugins_url( '/css/bootstrap.css', __FILE__ ), FALSE );
+		wp_register_style('fineuploader-css', plugins_url( '/css/fileuploader.css', __FILE__ ), FALSE );
+		wp_enqueue_style('fineuploader-css');
+		wp_register_style( 'bootstrap-css', plugins_url( '/css/bootstrap.min.css', __FILE__ ), array('fineuploader-css') );
 		wp_enqueue_style( 'bootstrap-css' );
-		
 		
 		// js
 		wp_enqueue_script('jquery');
 		wp_enqueue_script('jquery-ui-core');
 		wp_enqueue_script('jquery-ui-dialog');
-		wp_register_script( 'bootstrap-js', plugins_url( '/js/bootstrap.js', __FILE__ ), array( 'jquery' ) );
+		wp_register_script('fineuploader-js', plugins_url( 'js/fileuploader.min.js', __FILE__ ) );
+		wp_enqueue_script( 'fineuploader-js' );
+		wp_register_script( 'bootstrap-js', plugins_url( '/js/bootstrap.min.js', __FILE__ ), array( 'jquery' ) );
 		wp_enqueue_script( 'bootstrap-js' );
 		wp_register_script( 'catalogo-js', plugins_url( 'js/catalogo.js', __FILE__ ), array( 'jquery' ) );
 		wp_enqueue_script( 'catalogo-js' );
@@ -68,12 +71,18 @@ class trajCatalogo {
 	public static function catAdminInterface() {
 		
 		if ( current_user_can('manage_options') ) {
-			
+			/*
+			 * @TODO: deletar arquivos da publicação (vide actions)
+			 * @TODO: dar opção de deletar arquivo único clicando em um X no alert dos arquivos antigos (criar alert). 
+			 * basta criar função que remova o input hidden relacionado ao arquivo, assim ele não será pego pela função 
+			 * que transforma o valor dos inputs em string para passar para o servidor
+			 * @TODO estilizar todo o plugin
+			 * @TODO definir colunas que serão mostradas ao admin e ao usuário. coluna download TEM que ser implementada.
+			 * Talvez um botão "visualizar" abra um modal com as informações do restante das colunas...
+			 */ 
 			?>
 			
 			<div id="container">
-				
-				<div id="loading">Carregando...</div>
 			
 				<div id="trabs_placeholder"></div>
 				
@@ -82,6 +91,60 @@ class trajCatalogo {
 			</div>
 			
 			<script type="text/javascript">
+			
+			var pluginURL = '<?php echo plugin_dir_url(dirname(__FILE__) . '/catalogo.php'); ?>';
+			
+			function createUploader() {
+		        $fub = jQuery('#fineuploader');
+			    $messages = jQuery('#fineuploader_messages');
+			 
+			    var uploader = new qq.FileUploaderBasic({
+			      button: $fub[0],
+			      action: pluginURL + 'catalogo-fineuploader.php',
+			      debug: true,
+			      onSubmit: function(id, fileName) {
+			        $messages.append('<div id="file-' + id + '" class="alert" style="margin: 20px 0 0"></div>');
+			      },
+			      onUpload: function(id, fileName) {
+			        jQuery('#file-' + id).addClass('alert-info')
+			                        .html('<img src="' + pluginURL + 'img/loading.gif" alt="Inicializando. Por favor, aguarde."> ' +
+			                              'Inicializando ' +
+			                              '“' + fileName + '”');
+			      },
+			      onProgress: function(id, fileName, loaded, total) {
+			        if (loaded < total) {
+			          progress = Math.round(loaded / total * 100) + '% of ' + Math.round(total / 1024) + ' kB';
+			          jQuery('#file-' + id).removeClass('alert-info')
+			                          .html('<img src="' + pluginURL + 'img/loading.gif" alt="Em progresso. Por favor, aguarde."> ' +
+			                                'Enviando ' +
+			                                '“' + fileName + '” ' +
+			                                progress);
+			        } else {
+			          jQuery('#file-' + id).addClass('alert-info')
+			                          .html('<img src="' + pluginURL + 'img/loading.gif" alt="Salvando. Por favor, aguarde."> ' +
+			                                'Salvando ' +
+			                                '“' + fileName + '”');
+			        }
+			      },
+			      onComplete: function(id, fileName, responseJSON) {
+			        if (responseJSON.success) {
+			          jQuery('#file-' + id).removeClass('alert-info')
+			                          .addClass('alert-success')
+			                          .html('<i class="icon-ok"></i> ' +
+			                                'Arquivo ' +
+			                                '“' + fileName + '” salvo com sucesso.');
+			          $fub.append('<input type="hidden" class="uploaded-files" value="' + fileName + '" />');
+			        } else {
+			          jQuery('#file-' + id).removeClass('alert-info')
+			                          .addClass('alert-error')
+			                          .html('<i class="icon-exclamation-sign"></i> ' +
+			                                'Erro ao salvar ' +
+			                                '“' + fileName + '”: ' +
+			                                responseJSON.error);
+			        }
+			      }
+			    });
+			}
 
 				jQuery(document).ready(function(){
 	
@@ -103,21 +166,13 @@ class trajCatalogo {
 							jQuery(this).closest('.ui-dialog').find('.ui-dialog-buttonpane button:eq(0)').blur(); 
 						}
 					});
-	
-					// AJAX loading indicator 
-					jQuery("#loading").bind("ajaxStart", function(){
-						jQuery(this).show().siblings().invisible();
-					}).bind("ajaxComplete", function(){
-						jQuery(this).hide().siblings().visible();
-					});
-					
-					var pluginURL = '<?php echo plugin_dir_url(dirname(__FILE__) . '/catalogo.php'); ?>';
 					
 					loadPublicacoes({
 								url			:	pluginURL,
 								editable	:	true
 					});
 					loadChaves(pluginURL);	
+					
 				});
 			
 			</script>
@@ -131,8 +186,6 @@ class trajCatalogo {
 		?>
 			
 			<div id="container">
-				
-				<div id="loading">Carregando...</div>
 			
 				<div id="pesquisa_placeholder"></div>
 			
@@ -162,19 +215,13 @@ class trajCatalogo {
 							jQuery(this).closest('.ui-dialog').find('.ui-dialog-buttonpane button:eq(0)').blur(); 
 						}
 					});
-	
-					// ajax loading indicator 
-					jQuery("#loading").bind("ajaxStart", function(){
-						jQuery(this).show().siblings().invisible();
-					}).bind("ajaxComplete", function(){
-						jQuery(this).hide().siblings().visible();
-					});
 					
 					var pluginURL = '<?php echo plugin_dir_url(dirname(__FILE__) . '/catalogo.php'); ?>';
 					
 					loadPublicacoes({
 						url:pluginURL
 					});
+					
 				});
 			
 			</script>

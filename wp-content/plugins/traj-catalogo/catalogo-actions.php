@@ -3,10 +3,11 @@
 require_once('../../../wp-load.php');
 require_once('catalogo-config.php');
 require_once('catalogo-db-ops.php');
+require_once('inc/util.php');
 	
 function prepareData(){
 
-	$palavraIDs = implode(",", $_POST['selected_chaves']);
+	$palavraIDs = @implode(",", $_POST['selected_chaves']);
 	
 	$stuff["dados"] = array(
 			"autor" => $_POST['autor'],
@@ -20,8 +21,7 @@ function prepareData(){
 			"ano" => $_POST['ano'],
 			"palavra_ids" => $palavraIDs,
 			"fotocopias" => $_POST['fotocopias'],
-			"arquivos" => $_POST['arquivos'],
-			"downloads_count" => 0
+			"arquivos" => $_POST['arquivos']
 	);
 	$stuff["where"] = array( "id" => $_POST['id'] );
 	
@@ -48,7 +48,14 @@ if ( current_user_can('manage_options') ) {
 				echo "error";			
 			break;
 			
+		case "down_trab":
+			$res = trajCatalogoDBops::increaseDlCount( $_POST['itemID'] );
+			if(!res)
+				echo "error";
+			break;
+			
 		case "del_trab":
+			// @TODO pegar coluna arquivos do trabalho passando ID (implementar função em dp-ops)
 			$res = trajCatalogoDBops::delTrabalho( $dados );
 			if(!res)
 				echo "error";

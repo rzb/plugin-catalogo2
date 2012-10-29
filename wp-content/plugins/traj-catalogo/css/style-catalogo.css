@@ -2,3 +2,10 @@
 
 tr.selected{background-color: lightblue;}
 tr.catalogo:hover, tr.catalogo-chave:hover{cursor:pointer;}
+
+input#custom_pag{ width: 33px !important; height: 20px !important; margin: 0 !important; text-align: center !important; }
+
+div.table-edit{ float: left; }
+div.table-pagination{ float: right; }
+div.table-results{ float: right; }
+th.th-primeira_pag, th.th-ultima_pag{ width: 10%; }

@@ -70,52 +70,15 @@ class trajCatalogoDBops {
 			// inicializa offset e limit caso não tenham sido entrados (ex.: primeiro carregamento)
 			if (!$offset) $offset = 0;
 			if (!$limit) $limit = 15;
-			// se o filtro de palavras-chave foi entrado...
-			if (is_array($filters)) {
-				// inicializa a variável que fará com que a próxima consulta comece de onde a última parou
-				$dyamicOffset = $offset;
-				// inicializa array de id's de registros (trabalhos/publicações...) que vai ser usado na consulta final
-				$ids = array();
-				/* THE LOOP: 
-				 * roda enquanto ambas as condições forem verdadeiras:
-				 * - o array de id's (número de registros) for menor que o limite de registros esperado => se já tenho a quantidade de id's que espero, não continua
-				 * - o "offset dinâmico" for menor ou igual ao total de registros da tabela 			=> se não há mais registros a testar, não continua
-				 * */
-				while ((sizeof($ids) < $limit) && ($dyamicOffset <= $totalTrabs)) {
-					// traz o id e a string de chaves separadas por vírgula de cada registro, començando a apatir do novo valor de offset
-					$trabalhos = $wpdb->get_results("SELECT id, palavra_ids 
-												  	 FROM " . TRAJ_TRABALHOS_TABLE . "
-													 LIMIT $dyamicOffset, $limit", OBJECT_K );
-					/* FILTRAGEM:
-					 * para cada registro retornado, explode suas chaves para um array e verifica se ele contêm todas as chaves do filtro entrado
-					 * - se em algum momento uma chave do filtro não corresponder a uma chave do registro, pula para o próximo trabalho
-					 * - se todas as chaves do filtro passarem, adiciona o ID do registro atual ao array de id's
-					 * */
-					foreach ($trabalhos as $key => $trab) {
-						$chaves = explode(',', $trab->palavra_ids);
-						foreach ($filters as $f) {
-							if (!in_array($f, $chaves)) continue 2;
-						}
-						$ids[] = $trab->id;
-					}
-					// faz a próxima consulta começar de onde parou a última
-					$dyamicOffset += $limit; 
-				}
-				// junta todos os ID's numa string, separados por vírgula
-				$ids = implode(",",$ids);
-				// finalmente, recupera todos os registros que correspondem aos id's
-				$trabalhos = $wpdb->get_results("SELECT *
-										  	 	 FROM " . TRAJ_TRABALHOS_TABLE . "
-												 WHERE id in (" .$ids. ") 
-												 LIMIT $offset, $limit", OBJECT_K );
-			// se nenhum filtro foi entrado, realiza consulta normalmente
-			} else {
-		
-				$trabalhos = $wpdb->get_results("SELECT *
-										  	 	 FROM " . TRAJ_TRABALHOS_TABLE . "
-											 	 LIMIT $offset, $limit", OBJECT_K );
-			}
-			// retorna os registros filtrados
+			// monta cláusula WHERE caso haja filtros
+			$where = self::queryFilter($filters);
+			
+			$trabalhos = $wpdb->get_results("SELECT *
+										  	 FROM " . TRAJ_TRABALHOS_TABLE . " 
+										  	 $where 
+											 LIMIT $offset, $limit", OBJECT_K );
+												 
+			// retorna os registros
 			return $trabalhos;
 		// se não houver registros na tabela, não faz nada e retorna false
 		} else {
@@ -193,6 +156,7 @@ class trajCatalogoDBops {
 		global $wpdb;
 		
 		if ( $stuff != NULL ) {
+			// unlink -> deletar arquivos
 			return $wpdb->delete( TRAJ_TRABALHOS_TABLE, $stuff["where"]);
 		} else {
 			return FALSE;
@@ -209,10 +173,12 @@ class trajCatalogoDBops {
 		}
 	}
 	
-	public static function getTotalTrabalhos() {
+	public static function getTotalTrabalhos($filters=NULL) {
 		global $wpdb;
 		
-		$total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(id) FROM " .TRAJ_TRABALHOS_TABLE));
+		$where = self::queryFilter($filters);
+		
+		$total = $wpdb->get_var("SELECT COUNT(id) FROM " .TRAJ_TRABALHOS_TABLE. " $where");
 		
 		return $total;
 	}
@@ -223,6 +189,59 @@ class trajCatalogoDBops {
 		$total = $wpdb->get_var($wpdb->prepare("SELECT COUNT(id) FROM " .TRAJ_PALAVRAS_TABLE));
 		
 		return $total;
+	}
+	
+	public static function increaseDlCount( $id ) {
+		global $wpdb;
+		
+		if ( $id != NULL ) {
+			return $wpdb->query( "UPDATE " .TRAJ_TRABALHOS_TABLE. " SET downloads_count = downloads_count+1 WHERE id = $id" );
+		} else {
+			return FALSE;
+		}
+	}
+	
+	
+	private static function queryFilter($filters) {
+		global $wpdb;
+		
+		$where = "";
+		// se pelo menos um filtro foi entrado...
+		if (is_array($filters)) {
+			// se há filtro por autor...
+			if(isset($filters['autor'])) {
+				$autorFilter	= "'%" .$filters['autor']. "%'";
+			}
+			// se há filtro por palavras-chave...
+			if(isset($filters['chaves'])) {
+				$chavesFilter	= $filters['chaves'];
+				$ids			= array();				
+				
+				$trabalhos = $wpdb->get_results("SELECT id, palavra_ids 
+											  	 FROM " . TRAJ_TRABALHOS_TABLE, OBJECT_K );
+
+				foreach ($trabalhos as $key => $trab) {
+					$chaves = explode(',', $trab->palavra_ids);
+					foreach ($chavesFilter as $f) {
+						if (!in_array($f, $chaves)) continue 2;
+					}
+					$ids[] = $trab->id;
+				}
+
+				$ids = implode(",",$ids);
+				$chavesFilter = "($ids)";
+			}
+			
+			if (isset($autorFilter) && isset($chavesFilter)) {
+				$where = "WHERE autor LIKE $autorFilter AND id in $chavesFilter";
+			} elseif (isset($autorFilter)) {
+				$where = "WHERE autor LIKE $autorFilter";
+			} else {
+				$where = "WHERE id in $chavesFilter";
+			}
+		}	
+		
+		return $where;
 	}
 	
 }
