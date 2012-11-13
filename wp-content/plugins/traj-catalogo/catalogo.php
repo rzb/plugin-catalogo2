@@ -72,13 +72,10 @@ class trajCatalogo {
 		
 		if ( current_user_can('manage_options') ) {
 			/*
-			 * @TODO: deletar arquivos da publicação (vide actions)
 			 * @TODO: dar opção de deletar arquivo único clicando em um X no alert dos arquivos antigos (criar alert). 
 			 * basta criar função que remova o input hidden relacionado ao arquivo, assim ele não será pego pela função 
 			 * que transforma o valor dos inputs em string para passar para o servidor
 			 * @TODO estilizar todo o plugin
-			 * @TODO definir colunas que serão mostradas ao admin e ao usuário. coluna download TEM que ser implementada.
-			 * Talvez um botão "visualizar" abra um modal com as informações do restante das colunas...
 			 */ 
 			?>
 			
@@ -103,10 +100,10 @@ class trajCatalogo {
 			      action: pluginURL + 'catalogo-fineuploader.php',
 			      debug: true,
 			      onSubmit: function(id, fileName) {
-			        $messages.append('<div id="file-' + id + '" class="alert" style="margin: 20px 0 0"></div>');
+			        $messages.html('<div id="file-fineuploader" class="alert" style="margin: 20px 0 0"></div>');
 			      },
 			      onUpload: function(id, fileName) {
-			        jQuery('#file-' + id).addClass('alert-info')
+			        jQuery('#file-fineuploader').addClass('alert-info')
 			                        .html('<img src="' + pluginURL + 'img/loading.gif" alt="Inicializando. Por favor, aguarde."> ' +
 			                              'Inicializando ' +
 			                              '“' + fileName + '”');
@@ -114,36 +111,46 @@ class trajCatalogo {
 			      onProgress: function(id, fileName, loaded, total) {
 			        if (loaded < total) {
 			          progress = Math.round(loaded / total * 100) + '% of ' + Math.round(total / 1024) + ' kB';
-			          jQuery('#file-' + id).removeClass('alert-info')
+			          jQuery('#file-fineuploader').removeClass('alert-info')
 			                          .html('<img src="' + pluginURL + 'img/loading.gif" alt="Em progresso. Por favor, aguarde."> ' +
 			                                'Enviando ' +
 			                                '“' + fileName + '” ' +
 			                                progress);
 			        } else {
-			          jQuery('#file-' + id).addClass('alert-info')
+			          jQuery('#file-fineuploader').addClass('alert-info')
 			                          .html('<img src="' + pluginURL + 'img/loading.gif" alt="Salvando. Por favor, aguarde."> ' +
 			                                'Salvando ' +
 			                                '“' + fileName + '”');
 			        }
 			      },
 			      onComplete: function(id, fileName, responseJSON) {
-			        if (responseJSON.success) {
-			          jQuery('#file-' + id).removeClass('alert-info')
+			      	if (responseJSON.success) {
+			        	jQuery('#file-fineuploader').removeClass('alert-info')
 			                          .addClass('alert-success')
-			                          .html('<i class="icon-ok"></i> ' +
+			                          .html('<button type="button" class="close remove-file" data-dismiss="alert">x</button><i class="icon-ok"></i> ' +
 			                                'Arquivo ' +
 			                                '“' + fileName + '” salvo com sucesso.');
-			          $fub.append('<input type="hidden" class="uploaded-files" value="' + fileName + '" />');
-			        } else {
-			          jQuery('#file-' + id).removeClass('alert-info')
-			                          .addClass('alert-error')
-			                          .html('<i class="icon-exclamation-sign"></i> ' +
-			                                'Erro ao salvar ' +
-			                                '“' + fileName + '”: ' +
-			                                responseJSON.error);
-			        }
+			          	$oldFile = jQuery('input.uploaded-files').val();
+			          	if(typeof $oldFile != 'undefined' && $oldFile != '') {
+			          		var data = {option : 'del_files', fileName : $oldFile};
+			          		jQuery.post(pluginURL+'catalogo-actions.php', data, function(data){
+			          			if(data != 'error') jQuery('input.uploaded-files').val(fileName);
+			          			else alert(data);
+			          		});
+			          	} else {
+			          		jQuery('input.uploaded-files').val(fileName);
+			          	}
+		        	} else {
+		          		jQuery('#file-fineuploader').removeClass('alert-info')
+		                          .addClass('alert-error')
+		                          .html('<button type="button" class="close" data-dismiss="alert">×</button><i class="icon-exclamation-sign"></i> ' +
+		                                'Erro ao salvar ' +
+		                                '“' + fileName + '”: ' +
+		                                responseJSON.error);
+		        	}
 			      }
 			    });
+			    
 			}
 
 				jQuery(document).ready(function(){
@@ -171,7 +178,9 @@ class trajCatalogo {
 								url			:	pluginURL,
 								editable	:	true
 					});
-					loadChaves(pluginURL);	
+					loadChaves({
+					            url         :   pluginURL
+					});	
 					
 				});
 			

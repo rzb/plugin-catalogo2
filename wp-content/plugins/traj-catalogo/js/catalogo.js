@@ -80,8 +80,14 @@ function loadPublicacoes(options) {
 			jQuery('#custom_pag').keypress(function(e) {
 			    if(e.which == 13) {
 			        var input = jQuery(this).val();
+			        var totalPag = jQuery('#total_pag').val();
 			        var gtOneREG = /^[1-9][0-9]*$/;
-			        if(gtOneREG.test(input)) options['page'] = input;
+			        if(gtOneREG.test(input)) {
+			            if(input > totalPag)
+			                 options['page'] = totalPag;
+			            else
+			                 options['page'] = input;
+			        }
 			        loadPublicacoes(options);
 			    }
 			});
@@ -115,7 +121,8 @@ function loadPublicacoes(options) {
 						if(!itemID) {
 							alert('Selecione uma publicação!');
 						} else {
-							data = {id : itemID, option : option};
+							var fileName = jQuery('#item-'+itemID).find('.file-name').val();
+							data = {id : itemID, option : option, fileName : fileName};
 							dlg.dialog("option", "title", "Confirmar ação");
 							dlg.dialog("option", "buttons", [
 								{
@@ -130,8 +137,10 @@ function loadPublicacoes(options) {
 									'class' : 'button-primary',
 									'click' : function() {
 										jQuery.post(options['url']+'catalogo-actions.php', data, function(data) {
-									    	if(data=="error") {
-										    	alert("Ocorreu um erro ao tentar realizar a ação!");
+									    	if(data=="delfile") {
+										    	alert("Ocorreu um erro ao tentar deletar o arquivo!");
+										    } else if(data=="db") {
+										        alert("Ocorreu um erro ao tentar deletar a publicação!");
 									    	} else {
 									    		option = undefined;
 									    		loadPublicacoes(options);
@@ -166,6 +175,12 @@ function loadPublicacoes(options) {
 									'click' : function() {
 										// publicar conteúdo e recarregar tabela de catálogos 
 										jQuery('#selected_chaves option').attr('selected', 'selected');
+										var files = '';
+										jQuery('.uploaded-files').each(function(i){
+							    			files += jQuery(this).val() + ',';
+							    		});
+										files = files.slice(0, - 1);
+										jQuery('#arquivos').val(files);
 										jQuery.post(options['url']+'catalogo-actions.php', jQuery('#trabForm').serialize(), function(data) {
 									    	if(data=="error") {
 										    	alert("Ocorreu um erro ao tentar realizar a ação!");
@@ -267,22 +282,79 @@ function loadPublicacoes(options) {
 }
 
 // tabela de palavras-chave 
-function loadChaves(url) {
-	var ajaxIndicator = '<div id="loading" style="height: 100%; background: url(' + url + 'img/ajax-loader.gif) no-repeat scroll center center;"></div>';
+function loadChaves(options) {
+	var ajaxIndicator = '<div id="loading" style="height: 100%; background: url(' + options['url'] + 'img/ajax-loader.gif) no-repeat scroll center center;"></div>';
 	
-	jQuery("#chaves_placeholder").html(ajaxIndicator).load(url+'catalogo-chaves-table-tpl.php', function(response, status, xhr) {
+	var defaultArgs = {
+        url         :   'http://www.pudim.com.br',
+        page        :   1
+    };
+    // atribuindo opções padrão para as opções omitidas na chamada da função
+    for(var key in defaultArgs) {
+        if(typeof options[key] == "undefined") options[key] = defaultArgs[key];
+    }
+	
+	jQuery("#chaves_placeholder").html(ajaxIndicator).load(options['url']+'catalogo-chaves-table-tpl.php', {page : options['page']}, function(response, status, xhr) {
 		if (status == "error") {
 	    	var msg = 'Desculpe, mas ocorreu um erro. Reporte-o ao administrador: ';
 	    	jQuery(this).html(msg + xhr.status + ' ' + xhr.statusText);
 		} else {
+		    
 			// selecionando palavra-chave 
 			var chaveID = null;
 			jQuery('tr.catalogo-chave').unbind('click').bind('click', function() {
-				jQuery('tr.catalogo-chave').removeClass('selected');
-				jQuery(this).addClass('selected');
-				chaveID = jQuery(this).attr('id').split('-');
-				chaveID = chaveID[1];
+			    var chave = jQuery(this);
+			    if (chave.hasClass('selected')) {
+			        jQuery('tr.catalogo-chave').removeClass('selected');
+			        chaveID = null;
+			    } else {
+			        jQuery('tr.catalogo-chave').removeClass('selected');
+			        chave.addClass('selected');
+			        chaveID = chave.attr('id').split('-');
+			        chaveID = chaveID[1];
+			    }
 			});
+			
+			// trocando de página pelos botões 
+            jQuery('.paginate_chave').unbind('click').bind('click', function() {
+                var option = jQuery(this).attr('id');
+                switch (option) {
+                    case 'first_pag_chave':
+                        options['page'] = 1;
+                        break;
+                    case 'previous_pag_chave':
+                        options['page'] -= 1;
+                        if(options['page'] < 1) options['page'] = 1;
+                        break;  
+                    case 'next_pag_chave':
+                        options['page'] += 1;
+                        break;
+                    case 'last_pag_chave':
+                        options['page'] = jQuery('#total_pag_chave').val();
+                        break;
+                    default:
+                        return;
+                        break;
+                }
+                loadChaves(options);
+            });
+
+            // trocando de página pelo valor digitado 
+            jQuery('#custom_pag_chave').keypress(function(e) {
+                if(e.which == 13) {
+                    var input = jQuery(this).val();
+                    var totalPag = jQuery('#total_pag_chave').val();
+                    var gtOneREG = /^[1-9][0-9]*$/;
+                    if(gtOneREG.test(input)) {
+                        if(input > totalPag)
+                             options['page'] = totalPag;
+                        else
+                             options['page'] = input;
+                    }
+                    loadChaves(options);
+                }
+            });
+            
 			// identificando opção clicada 
 			jQuery('#table_chaves button.edit-table').unbind('click').bind('click', function(event) {
 				var option	= jQuery(this).attr('id');
@@ -316,11 +388,11 @@ function loadChaves(url) {
 							alert('Selecione uma publicação!');
 						} else {
 							data = {chaveID : chaveID, option : option};
-							jQuery.post(url+'catalogo-actions.php', data, function(data) {
+							jQuery.post(options['url']+'catalogo-actions.php', data, function(data) {
 						    	if(data=="error") {
 							    	alert("Ocorreu um erro ao tentar realizar a ação!");
 						    	} else {
-						    		loadChaves(url);
+						    		loadChaves(options);
 						    	}
 							});
 						}
@@ -331,11 +403,11 @@ function loadChaves(url) {
 					// @todo validar newPalavra 
 					var newPalavra = jQuery('#new_palavra').val();
 					data = {chaveID : chaveID, option : option, palavra : newPalavra};
-					jQuery.post(url+'catalogo-actions.php', data, function(data) {
+					jQuery.post(options['url']+'catalogo-actions.php', data, function(data) {
 				    	if(data=="error") {
 					    	alert("Ocorreu um erro ao tentar realizar a ação!");
 				    	} else {
-				    		loadChaves(url);
+				    		loadChaves(options);
 				    	}
 					});
 				});

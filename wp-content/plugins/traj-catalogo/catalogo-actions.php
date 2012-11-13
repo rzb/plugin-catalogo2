@@ -27,6 +27,19 @@ function prepareData(){
 	
 	return $stuff;
 }
+
+function delFiles( $fileName ) {
+	
+	if ( $fileName != NULL ) {
+		$dir = plugin_dir_path(__FILE__).'uploads'.DIRECTORY_SEPARATOR;
+		echo $dir.$fileName;
+		if(file_exists( $dir.$fileName )) 
+			return unlink( $dir.$fileName );
+	} else {
+		return TRUE;
+	}
+}
+
 	
 if ( current_user_can('manage_options') ) {
 
@@ -35,47 +48,56 @@ if ( current_user_can('manage_options') ) {
 	$option		= $_POST['option'];
 	$chaveID	= $_POST['chaveID'];
 	$palavra	= $_POST['palavra'];
+	$fileName	= $_POST['fileName'];
 	
 	switch ($option) {
 		case "new_trab":
 			$res = trajCatalogoDBops::setTrabalho( $dados );
-			if(!res)
+			if(!$res)
 				echo "error";
 			break;
 		case "edit_trab":
 			$res = trajCatalogoDBops::editTrabalho( $dados );
-			if(!res)
+			if(!$res)
 				echo "error";			
 			break;
 			
 		case "down_trab":
 			$res = trajCatalogoDBops::increaseDlCount( $_POST['itemID'] );
-			if(!res)
+			if(!$res)
 				echo "error";
 			break;
 			
 		case "del_trab":
-			// @TODO pegar coluna arquivos do trabalho passando ID (implementar função em dp-ops)
-			$res = trajCatalogoDBops::delTrabalho( $dados );
-			if(!res)
-				echo "error";
+			$res1 = delFiles($fileName);
+			$res2 = trajCatalogoDBops::delTrabalho( $dados );
+			if(!$res1)
+				echo "delfile";
+            if(!$res2)
+                echo "db";
 			break;
 			
 		case "new_chave":
 			$res = trajCatalogoDBops::setChaves( $palavra );
-			if(!res)
+			if(!$res)
 				echo "error";
 			break;	
 			
 		case "edit_chave":
 			$res = trajCatalogoDBops::editChave( array("palavra" => $palavra), array("id" => $chaveID) );
-			if(!res)
+			if(!$res)
 				echo "error";
 			break;
 			
 		case "del_chave":
 			$res = trajCatalogoDBops::delChave( array("id" => $chaveID) );
-			if(!res)
+			if(!$res)
+				echo "error";
+			break;
+			
+		case "del_files":
+			$res = delFiles($fileName);
+			if(!$res)
 				echo "error";
 			break;
 			

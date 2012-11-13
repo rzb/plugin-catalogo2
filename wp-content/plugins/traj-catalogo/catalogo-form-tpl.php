@@ -9,7 +9,7 @@ if ($option == "edit_trab") {
 	$trab			= trajCatalogoDBops::getTrabalho($_POST['itemID']);
 	$autor			= $trab->autor;
 	$chosenChaves	= trajCatalogoDBops::getChaveIDsByTrab($trab->id);
-	$files			= @explode(',', $trab->arquivos);
+	$file			= $trab->arquivos;
 } elseif ($option == "filter_trab" && is_array($_POST['filters'])) {
 	if (isset($_POST['filters']['autor']))	$autor			= $_POST['filters']['autor'];
 	if (isset($_POST['filters']['chaves']))	$chosenChaves	= explode(',', $_POST['filters']['chaves']);
@@ -31,8 +31,6 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
 	</div>
  <?php if ($option != "filter_trab") : ?>	
 	<input type="hidden" name="id" value="<?php echo $trab->id; ?>" />
-	
-	<input type="hidden" name="arquivos" id="arquivos" />
 
 	<div class="control-group">
 	    <label class="control-label" for="titulo">Título</label>
@@ -88,17 +86,24 @@ $chaves 			= trajCatalogoDBops::getAllChaves();
     		<input type="text" name="fotocopias" id="fotocopias" value="<?php echo $trab->fotocopias; ?>" />
     	</div>
  	</div>
+ 	
+ 	<input type="hidden" name="arquivos" id="arquivos" />
+ 	
  	<div class="control-group">
     	<label class="control-label" for="fineuploader">Arquivo para download</label>
     	<div class="controls">
     		<div id="fineuploader" class="btn btn-success">
 				<i class="icon-upload icon-white"></i> Selecione ou arraste um arquivo
 			</div>
-		<?php if(is_array($files)) foreach ($files as $f) : ?>
-			<input type="hidden" class="uploaded-files" value="<?php echo $f; ?>" />
-			<p class="old-files"><?php echo $f; ?></p>
-		<?php endforeach; ?>
-    		<div id="fineuploader_messages"></div>
+			<input type="hidden" class="uploaded-files" <?php if(!empty($file)) echo 'value="' .$file. '"'; ?> />
+			<div id="fineuploader_messages">
+			<?php if(!empty($file)) : ?>
+				<div id="file-fineuploader" class="alert alert-success" style="margin: 20px 0 0">
+					<button type="button" class="close" data-dismiss="alert">×</button>
+					<i class="icon-ok"></i> “<?php echo $file; ?>”.
+				</div>
+			<?php endif; ?>
+    		</div>
     	</div>
  	</div>
  <?php endif; ?>

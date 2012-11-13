@@ -5,15 +5,18 @@ require_once('catalogo-config.php');
 
 class trajCatalogoDBops {
 	
-	public static function getAllChaves() {
+	public static function getAllChaves($offset=NULL, $limit=NULL) {
 		global $wpdb;
 		// contando chaves...
 		$totalChaves = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(id) FROM " . TRAJ_PALAVRAS_TABLE ) );
 		// trazendo as chaves
 		if ($totalChaves > 0) {
+		    if (!$offset) $offset = 0;
+            if (!$limit) $limit = 15;
 			$chaves = $wpdb->get_results(	"SELECT *
 									 		 FROM " . TRAJ_PALAVRAS_TABLE . "
-									 		 ORDER BY palavra ASC ", OBJECT_K );
+									 		 ORDER BY palavra ASC 
+									 		 LIMIT $offset, $limit", OBJECT_K );
 			return $chaves;
 		} else {
 			return FALSE;
@@ -122,6 +125,8 @@ class trajCatalogoDBops {
 			foreach ($data as $palavra) {
 				$wpdb->insert( TRAJ_PALAVRAS_TABLE, array("palavra" => $palavra) );
 			}
+			
+			return TRUE;
 	
 		} else {
 			return FALSE;
